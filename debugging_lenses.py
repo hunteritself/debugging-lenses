@@ -72,6 +72,50 @@ class DebuggingLens(FloatLayout):
         self.selected_widget = None
         # Currently highlighted widget
         self.selected_widget_highlight = None
+        self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
+        self._keyboard.bind(on_key_down=self._on_keyboard_down)
+
+    def _keyboard_closed(self):
+        self._keyboard.unbind(on_key_down=self._on_keyboard_down)
+        self._keyboard = None
+
+    def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
+        if keycode[1] == 'tab':
+            self.toggle_visibility()
+        elif keycode[1] in ['up', 'down']:
+            increase = keycode[1] == 'up'
+            self.update_lens_position_and_size(increase=increase)
+        return True
+
+    def toggle_visibility(self):
+        self.visible = not getattr(self, 'visible', False)
+        self.opacity = 1 if self.visible else 0
+
+        if self.control_panel:
+            self.control_panel.opacity = 1 if self.visible else 0
+
+    def update_lens_position_and_size(self, increase=True):
+        # Calculate the current center of the lens
+        current_center_x = self.lens_position[0] + self.lens_radius
+        current_center_y = self.lens_position[1] + self.lens_radius
+
+        # Update the lens diameter
+        change = 10 if increase else -10
+        new_diameter = max(10, self.lens_diameter + change)
+        self.lens_diameter = new_diameter
+        self.lens_radius = self.lens_diameter / 2
+
+        # Calculate the new center of the lens
+        new_x = current_center_x - self.lens_radius
+        new_y = current_center_y - self.lens_radius
+
+        # Update the lens position
+        self.pos = (new_x, new_y)
+        self.lens_position = (new_x, new_y)
+
+        # Update the display
+        self.draw_lens_and_handle()
+        self.update_info()
 
     def draw_lens_and_handle(self):
         with self.canvas.before:
