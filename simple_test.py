@@ -10,10 +10,10 @@ class TestApp(App):
         root = FloatLayout()
 
         # Add two buttons
-        button1 = Button(text="Button 1", size_hint=(None, None), size=(200, 50), pos=(100, 300))
+        button1 = Button(text="Button 1", size_hint=(None, None), size=(200, 50), pos=(300, 300))
         root.add_widget(button1)
 
-        button2 = Button(text="Button 2", size_hint=(None, None), size=(200, 50), pos=(400, 300))
+        button2 = Button(text="Button 2", size_hint=(None, None), size=(200, 50), pos=(600, 300))
         root.add_widget(button2)
 
         # Set the names of the widgets

@@ -47,7 +47,13 @@ class DebuggingControlPanel(Popup):
 
             "show_background_color": CustomCheckBox(active=self.debugging_lens.debug_settings["show_background_color"]),
 
-            "show_font_color": CustomCheckBox(active=self.debugging_lens.debug_settings["show_font_color"])
+            "show_font_color": CustomCheckBox(active=self.debugging_lens.debug_settings["show_font_color"]),
+
+            # Add the custom checkbox for properties
+            "show_properties": CustomCheckBox(active=self.debugging_lens.debug_settings["show_properties"]),
+
+            # Add the custom checkbox for event log
+            "show_event_log": CustomCheckBox(active=self.debugging_lens.debug_settings["show_event_log"])
         }
 
         for setting_name, checkbox in self.checkbox_items.items():
@@ -80,3 +86,7 @@ class DebuggingControlPanel(Popup):
     def dismiss(self, *largs, **kwargs):
         super(DebuggingControlPanel, self).dismiss(*largs, **kwargs)
         self.is_open = False
+
+    def toggle_debug_setting(self, setting_name, value):
+        self.debugging_lens.debug_settings[setting_name] = value
+        self.debugging_lens.refresh_display()

@@ -2,6 +2,8 @@
 
 from kivy.core.window import Window
 from kivy.graphics import Color, Line, Ellipse
+from kivy.properties import ObjectProperty
+from kivy.uix.button import Button
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.label import Label
 
@@ -9,9 +11,17 @@ from debugging_control_panel import DebuggingControlPanel
 
 
 class DebuggingLens(FloatLayout):
+    lens_position = ObjectProperty(None)
+
     def __init__(self, **kwargs):
         super(DebuggingLens, self).__init__(**kwargs)
+        # The current instance
+        DebuggingLens.current_instance = self
+
         self.pos_hint = {'center_x': 0.5, 'center_y': 0.5}
+
+        self.lens_position = self.pos
+        self.bind(lens_position=self.update_label_position)
 
         self.debug_settings = {
             "show_class": True,
@@ -21,7 +31,11 @@ class DebuggingLens(FloatLayout):
             "show_font": True,
             "show_font_size": True,
             "show_background_color": True,
-            "show_font_color": True
+            "show_font_color": True,
+            # Add the property setting
+            "show_properties": False,
+            # Add the event log setting
+            "show_event_log": False
         }
 
         # Check if the debugging lens is active
@@ -39,7 +53,8 @@ class DebuggingLens(FloatLayout):
         self.draw_lens_and_handle()
 
         # Draw the info label
-        label_size = (self.lens_diameter * 0.8, self.lens_diameter * 0.8)  # 标签大小稍小于放大镜直径
+        # The size of the label is 80% of the lens diameter
+        label_size = (self.lens_diameter * 0.8, self.lens_diameter * 0.8)
         label_x = self.x + (self.lens_diameter - label_size[0]) / 2
         label_y = self.y + (self.lens_diameter - label_size[1]) / 2
 
@@ -84,8 +99,16 @@ class DebuggingLens(FloatLayout):
         label_y = self.y + (self.lens_diameter - self.info_label.height) / 2
         return label_x, label_y
 
+    def update_label_position(self, instance, value):
+        label_x, label_y = self.calculate_label_pos()
+        self.info_label.pos = (label_x, label_y)
+
     def on_touch_move(self, touch):
+        if self.is_touch_on_control_panel(touch):
+            return False
+
         if self.collide_point(*touch.pos):
+            self.lens_position = touch.pos
             self.pos = touch.pos
             self.lens.pos = self.pos
 
@@ -140,7 +163,7 @@ class DebuggingLens(FloatLayout):
                 self.highlight_selected_widget()
             self.checkbox_changed = False
         else:
-            self.info_label.text = "No widget"
+            self.info_label.text = "No Widget"
             self.selected_widget = None
             self.highlight_selected_widget()
 
@@ -170,6 +193,19 @@ class DebuggingLens(FloatLayout):
         if self.debug_settings["show_font_color"] and hasattr(widget, 'color'):
             info_text += f"Font Color: {widget.color}\n"
 
+        # Add the property info
+        if self.debug_settings["show_properties"]:
+            info_text += "\nProperties:\n"
+            for property_name in widget.properties():
+                if property_name in ['parent', 'text']:
+                    value = getattr(widget, property_name)
+                    if value is not None:
+                        info_text += f"{property_name.capitalize()}: {value}\n"
+
+        # Add the event info
+        if self.debug_settings["show_event_log"]:
+            info_text += "\nEvent Log:\n" + DebuggingLens.get_event_log()
+
         self.info_label.text = info_text
 
     def on_control_panel_dismiss(self, instance):
@@ -193,3 +229,47 @@ class DebuggingLens(FloatLayout):
                 self.selected_widget_highlight = Line(rectangle=self.selected_widget.pos + self.selected_widget.size, width=2)
         else:
             self.selected_widget_highlight = None
+
+    def refresh_display(self):
+        if self.selected_widget:
+            self.construct_info_text(self.selected_widget)
+
+    # Store the event log
+    event_log = []
+
+    @staticmethod
+    def log_event(message):
+        print("Event Logged:", message)
+        DebuggingLens.event_log.append(message)
+
+    @staticmethod
+    def get_event_log():
+        formatted_log = "\n".join(DebuggingLens.event_log)
+        return formatted_log
+
+    @staticmethod
+    def get_current_instance():
+        return DebuggingLens.current_instance
+
+    def is_touch_on_control_panel(self, touch):
+        if self.control_panel and self.control_panel.collide_point(*touch.pos):
+            return True
+        return False
+
+
+class TrackedButton(Button):
+    def on_touch_down(self, touch):
+        # Check if the touch is on the button
+        if self.collide_point(*touch.pos):
+            # If it is, record the event
+            DebuggingLens.log_event(f"on_touch_down at {touch.pos} on {self.text}")
+
+            # Refresh the display
+            lens_instance = DebuggingLens.get_current_instance()
+            if lens_instance:
+                lens_instance.refresh_display()
+
+            # Return True
+            return super().on_touch_down(touch)
+        # If not, return False
+        return False
