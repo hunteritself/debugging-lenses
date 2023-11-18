@@ -82,8 +82,8 @@ class DebuggingLens(FloatLayout):
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
         if keycode[1] == 'tab':
             self.toggle_visibility()
-        elif keycode[1] in ['up', 'down']:
-            increase = keycode[1] == 'up'
+        elif keycode[1] in ['left', 'right']:
+            increase = keycode[1] == 'right'
             self.update_lens_position_and_size(increase=increase)
         return True
 

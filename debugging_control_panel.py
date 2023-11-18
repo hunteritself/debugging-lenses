@@ -4,6 +4,9 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 from kivy.uix.switch import Switch
+from kivy.core.window import Window
+from kivy.graphics import Color, Rectangle
+from kivy.core.window import Keyboard
 
 from custom_check_box import CustomCheckBox
 
@@ -17,6 +20,7 @@ class DebuggingControlPanel(Popup):
         self.size = (600, 600)
         self.pos_hint = {'top': 1, 'right': 1}
         self.auto_dismiss = False
+        self.current_focus_index = 0
 
         layout = BoxLayout(orientation='vertical', padding=[10, 10, 10, 10], spacing=10)
 
@@ -31,6 +35,7 @@ class DebuggingControlPanel(Popup):
         switch_hbox.add_widget(Label(text='Enable Debugging'))
         switch_hbox.add_widget(self.debugging_switch)
         layout.add_widget(switch_hbox)
+        Window.bind(on_key_down=self.on_key_down)
 
         self.checkbox_items = {
             "show_class": CustomCheckBox(active=self.debugging_lens.debug_settings["show_class"]),
@@ -55,6 +60,7 @@ class DebuggingControlPanel(Popup):
             # Add the custom checkbox for event log
             "show_event_log": CustomCheckBox(active=self.debugging_lens.debug_settings["show_event_log"])
         }
+        self.labels = []
 
         for setting_name, checkbox in self.checkbox_items.items():
             checkbox.bind(active=lambda checkbox, value, setting_name=setting_name: self.debugging_lens.toggle_debug_setting(setting_name, value))
@@ -66,6 +72,7 @@ class DebuggingControlPanel(Popup):
             checkbox.color = (0, 1, 0, 1)
 
             label = Label(text=display_name, size_hint_x=None, width=200, halign='left')
+            self.labels.append(label)
             hbox.add_widget(label)
             hbox.add_widget(checkbox)
             layout.add_widget(hbox)
@@ -78,6 +85,32 @@ class DebuggingControlPanel(Popup):
 
         if not value:
             self.debugging_lens.info_label.text = ''
+    def on_key_down(self, instance, keyboard, keycode, text, modifiers):
+        if keycode == 82:
+            self.size = (self.size[0] + 10, self.size[1] + 10)
+        elif keycode == 81:
+            self.size = (self.size[0] - 10, max(100, self.size[1] - 10))
+        elif keycode == 40:
+            self.focus_next_checkbox()
+        elif keycode == 44:
+            self.toggle_focused_checkbox()
+            
+    def dismiss(self, *largs, **kwargs):
+        Window.unbind(on_key_down=self.on_key_down)
+        super(DebuggingControlPanel, self).dismiss(*largs, **kwargs)
+
+    def toggle_focused_checkbox(self):
+        current_setting_name = list(self.checkbox_items.keys())[self.current_focus_index - 1]
+        current_checkbox = self.checkbox_items[current_setting_name]
+        current_checkbox.active = not current_checkbox.active
+
+    def focus_next_checkbox(self):
+        for label in self.labels:
+            label.color = (1, 1, 1, 1)
+
+        self.labels[self.current_focus_index].color = (1, 0, 0, 1)
+
+        self.current_focus_index = (self.current_focus_index + 1) % len(self.checkbox_items)
 
     def open(self, *largs):
         super(DebuggingControlPanel, self).open(*largs)
