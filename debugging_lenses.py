@@ -85,7 +85,27 @@ class DebuggingLens(FloatLayout):
         elif keycode[1] in ['left', 'right']:
             increase = keycode[1] == 'right'
             self.update_lens_position_and_size(increase=increase)
+        elif keycode[1] == 'w':
+            self.move_lens(0, 10)
+        elif keycode[1] == 'a':
+            self.move_lens(-10, 0)
+        elif keycode[1] == 's':
+            self.move_lens(0, -10)
+        elif keycode[1] == 'd':
+            self.move_lens(10, 0)
         return True
+
+    def move_lens(self, x_change, y_change):
+        current_center_x = self.lens_position[0]
+        current_center_y = self.lens_position[1]
+        new_x = current_center_x + x_change
+        new_y = current_center_y + y_change
+
+        self.pos = (new_x, new_y)
+        self.lens_position = (new_x, new_y)
+
+        self.draw_lens_and_handle()
+        self.update_info()
 
     def toggle_visibility(self):
         self.visible = not getattr(self, 'visible', False)
