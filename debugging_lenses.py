@@ -203,6 +203,9 @@ class DebuggingLens(FloatLayout):
         if not self.active:
             return
 
+        # Add the distance threshold
+        distance_threshold = 200
+
         # Get the center of the lens
         lens_center_x = self.x + self.lens_radius
         lens_center_y = self.y + self.lens_radius
@@ -220,11 +223,18 @@ class DebuggingLens(FloatLayout):
                     min_distance = distance
                     closest_widget = widget
 
+            # Add the distance threshold check
             # If the checkbox is clicked, update the info label
-            if not self.checkbox_changed or closest_widget == self.selected_widget:
-                self.selected_widget = closest_widget
-                self.construct_info_text(closest_widget)
+            if min_distance <= distance_threshold:
+                if not self.checkbox_changed or closest_widget == self.selected_widget:
+                    self.selected_widget = closest_widget
+                    self.construct_info_text(closest_widget)
+                    self.highlight_selected_widget()
+            else:
+                self.info_label.text = "No Widget"
+                self.selected_widget = None
                 self.highlight_selected_widget()
+
             self.checkbox_changed = False
         else:
             self.info_label.text = "No Widget"

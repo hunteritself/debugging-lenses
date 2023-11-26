@@ -1,12 +1,10 @@
 # debugging_control_panel.py
 
+from kivy.core.window import Window
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 from kivy.uix.switch import Switch
-from kivy.core.window import Window
-from kivy.graphics import Color, Rectangle
-from kivy.core.window import Keyboard
 
 from custom_check_box import CustomCheckBox
 
